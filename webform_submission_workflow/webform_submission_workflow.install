@@ -1,0 +1,67 @@
+<?php
+
+/**
+ * @file
+ *  Installation file for webform_submission_workflow module.
+ */
+
+/**
+ * Implements hook_schema().
+ *
+ * Describe the module's data model as an associative array. This removes
+ * the requirement to write database-specific SQL to create tables.
+ *
+ * For full details: http://drupal.org/node/146843
+ */
+function webform_submission_workflow_schema() {
+  // Schema definition of this table.
+  $schema['webform_submission_workflow'] = array(
+    'description' => "Holds configuration data for webform_submission_workflow.",
+    'fields' => array(
+        'id'  => array(
+            'type' => 'serial',
+            'not NULL' => TRUE,
+            'description' => "Primary Key: Unique ID.",
+        ),
+        'pet' => array(
+            'type' => 'varchar',
+            'length' => 255,
+            'not NULL' => TRUE,
+            'description' => "The machine name of the previewable email template.",
+        ),
+        'webform' => array(
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not NULL' => TRUE,
+            'default' => 0,
+			'description' => "The NID of the webform.",
+        ),
+		'submission' => array(
+            'type' => 'int',
+            'unsigned' => TRUE,
+            'not NULL' => TRUE,
+            'default' => 0,
+			'description' => "The SID of the submission.",
+        ),
+        'last' => array(	
+		       'description' => 'The date when the pet was sent.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+
+        ),
+    ),
+    'primary key' => array('id'),
+  );
+
+  return $schema;
+}
+/**
+ * Implements hook_uninstall().
+ */
+function webform_submission_workflow_uninstall() {
+  db_delete('variable')
+    ->condition('name', 'webform_submission_workflow%', 'LIKE')
+    ->execute();
+	
+}

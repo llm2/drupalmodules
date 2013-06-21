@@ -1,0 +1,342 @@
+<?php
+/**
+ * When a webform submission is received, it can be approved/declined
+ * Works with Webform 7.x-3.16, but may break with upgrade
+ * seems to use a diff method to access form values
+ * IMPORTANT: need to add test for encryption
+ **/
+
+/**
+ * Implements hook_menu().
+ */
+
+function webform_submission_workflow_menu() {
+	$items = array();
+	$items['node/%webform_menu/submission/%webform_menu_submission/workflow'] = array('title' => 'Submission Workflow', 'load arguments' => array(1), 'page callback' => 'drupal_get_form', 'page arguments' => array('webform_submission_workflow_status', 1, 3), 'access callback' => 'webform_results_access', 'access arguments' => array(1), 'type' => MENU_CALLBACK, );
+	return $items;
+}
+
+/**
+ * hook_webform_submission_actions
+ *
+ * @param $node
+ *   The Webform node on which this submission was made.
+ * @param $submission
+ *   The Webform submission that is about to be saved to the database.
+ */
+function webform_submission_workflow_webform_submission_actions($node, $submission) {
+	$actions = array();
+	$mapping = _component_mapping($node);
+	// Does this submission already have approved status?
+	/*$approved = FALSE;
+	 if (isset($submission->data[$mapping['status']]['value'][0])) {
+	 if ($submission->data[$mapping['status']]['value'][0] == 'approved') {
+	 $approved = TRUE;
+	 }
+	 }*/
+	// Show action if user has results access and submission not already approved (shows if status is declined).
+	if (webform_results_access($node) && array_key_exists('status', $mapping)) {
+		$actions['approved'] = array('title' => t('Workflow'), 'href' => 'node/' . $node -> nid . '/submission/' . $submission -> sid . '/workflow', 'query' => drupal_get_destination(), );
+	}
+	return $actions;
+}
+
+function webform_submission_workflow_status_submit($form, &$form_state) {
+	// Retrieve node and submission.
+
+	// dpm($form_state['values']);
+
+	$action = $form_state['values']['item0']['action'];
+	//$message = $form_state['values']['message'];
+
+	$node = $form_state['build_info']['args'][0];
+	$submission = $form_state['build_info']['args'][1];
+
+	$mapping = _component_mapping($node);
+	$submission -> data[$mapping['status']]['value'][0] = $action;
+
+	if (webform_submission_update($node, $submission)) {
+		drupal_set_message("Request " . $action);
+	} else {
+		drupal_set_message(t('Could not update the status of this request.'), 'error');
+		return;
+	}
+
+	// Send notification email.
+	//webform_submission_workflow_status_email($form_state['values']['item2']['email'], $form_state['values']['item2']['cc'],$form_state['values']['item0']['from'], $node->title . ' ' . $action, 'Your request has been ' . $action . ".\n\n" . $message);
+
+	webform_submission_workflow_pet_email($form_state['values']['item1']['pet'], $form_state['values']['item2']['email'], $form_state['values']['item2']['cc'], $node, $submission);
+
+}
+
+/**
+ * Form to approve/decline a submission.
+ */
+function webform_submission_workflow_status($form, $form_state, $node, $submission) {
+	// Render the admin UI breadcrumb.
+	webform_set_breadcrumb($node, $submission);
+	$mapping = _component_mapping($node);
+	//if we want to use the name, we will need to check for encryption
+	//$recipient_name = $submission->data[$mapping[first_name]]['value'][0] . " " . $submission->data[$mapping[last_name]]['value'][0];
+
+	$form['#tree'] = TRUE;
+	$form['#node'] = $node;
+	$form['#submission'] = $submission;
+
+	$form['description'] = array('#type' => 'item', '#title' => t('Update Approval Status for this submission and/or send E-mail'), );
+
+	$options = array();
+	$actionoptions = array();
+	// $markup = "<td><p>";
+
+	foreach ($node->webform['components'] as $key => $component) {
+		if (isset($submission -> data[$key]['value'][0])) {
+			if ($component['type'] == 'email' || ($component['type'] == 'select')) {
+
+				$value = $submission -> data[$key]['value'][0];
+				//$valid_email = ;
+				if (valid_email_address($value)) {
+					$options[$value] = $component['name'] . ': ' . $value;
+				}
+
+			}
+
+			if ($component['form_key'] == 'status') {
+				//get the options
+				$a = preg_split('/\n+/', $component['extra']['items']);
+				if (is_array($a)) {
+					foreach ($a AS $actionoption) {
+						list($k, $v) = explode("|", $actionoption);
+						$actionoptions[$k] = $v;
+						//$markup .= "Your " . $node->title . " status: " . $v . "<br/>";
+					}//end foreach
+				}//end is_array
+
+			}//end if status
+
+		}//end isset
+
+	}//end foreach component
+
+	$form['actions'] = array('#type' => 'actions');
+
+	$form['item0']['table_start'] = array('#markup' => '<table><thead><tr><th  style="background-color:#ccccff;">Update Status</th></tr></thead><tbody>');
+
+	$form['item0']['tr_start_1'] = array('#markup' => '<tr><td>');
+
+	$form['item0']['action'] = array('#type' => 'radios',
+	//'#title' => t('Action'),
+	'#options' => $actionoptions, '#default_value' => $submission -> data[$mapping['status']]['value'][0], );
+
+	$form['item0']['tr_end_1'] = array('#markup' => '</td></tr>');
+	$form['item0']['table_end'] = array('#markup' => '</tbody></table>');
+
+	$form['item1']['table_start'] = array('#markup' => '<table><thead><tr><th  style="background-color:#ccccff;"><span>Send Workflow E-mail</span></th><th  style="background-color:#ccccff;">View Workflow E-mail Template</th></tr></thead><tbody>');
+
+	$form['item1']['tr_start_1'] = array('#markup' => '<tr>');
+
+	$pet_templates = _get_pet_templates();
+	$matching_templates = array();
+	$preview_markup = "";
+	foreach ($pet_templates as $k => $v) {
+
+		//show pet templates that begin with same number as current node with webform
+		if (preg_match('/^' . $node -> nid . '/', $k)) {
+
+			$matching_templates[$k] = $v;
+			$preview_markup .= l(t($v), '/pet/' . $k, array('query' => array('uid' => $submission -> uid)));
+			$preview_markup .= "<br/>";
+
+		}
+	}
+
+	$form['item1']['pet'] = array('#type' => 'radios', '#options' => $matching_templates, '#prefix' => '<td>', '#suffix' => '</td>', );
+
+	$form['item1']['pet2'] = array('#type' => 'markup', '#markup' => $preview_markup, '#prefix' => '<td>', '#suffix' => '</td>', );
+
+	$form['item1']['table_end'] = array('#markup' => '</tr></tbody></table>');
+
+	$form['item2']['table_start'] = array('#markup' => '<table><thead><tr><th>Choose E-Mail recipient</th><th>Additional Recipients (Optional)</th></tr></thead><tbody>');
+
+	$form['item2']['tr_start_1'] = array('#markup' => '<tr>');
+
+	$form['item2']['email'] = array('#type' => 'radios', '#options' => $options, '#prefix' => '<td>', '#suffix' => '</td>', );
+	$form['item2']['cc'] = array('#type' => 'checkboxes', '#options' => $options, '#prefix' => '<td>', '#suffix' => '</td>', );
+
+	$form['item2']['tr_end_1'] = array('#markup' => '</tr>');
+
+	$form['item2']['table_end'] = array('#markup' => '</tbody></table>');
+
+	$form['actions']['status'] = array('#type' => 'submit', '#value' => t('Submit'), );
+
+	$form['actions']['cancel'] = array('#type' => 'markup', '#markup' => l(t('Cancel'), isset($_GET['destination']) ? $_GET['destination'] : 'node/' . $node -> nid . '/submission/' . $submission -> sid), );
+
+	return $form;
+}
+
+/**
+ * Build and send notification email.
+ */
+function webform_submission_workflow_status_email($to, $ccarray, $from, $subject, $body) {
+
+	// Find out if html emails are possible.
+	$html_capable = webform_email_html_capable();
+
+	if (!$html_capable) {
+		$body = str_replace('<p>', '', $body);
+		$body = str_replace('</p>', "\r\n\r\n", $body);
+	}
+	$language = language_default();
+	$mail_params = array('message' => $body, 'subject' => $subject, 'headers' => array(), 'plain' => !$html_capable, 'html' => $html_capable, );
+	$mail_params['plaintext'] = $html_capable ? NULL : $body;
+	if ($html_capable) {
+		$mail_params['header']['Content-Type'] = 'text/html; charset=UTF-8';
+	}
+	$cc = "";
+	foreach ($ccarray as $address) {
+		if (valid_email_address($address)) {
+			$cc .= $address . ",";
+		}
+	}
+	$mail_params['headers']['CC'] = $cc;
+
+	if (!is_null($to)) {
+		$message = drupal_mail('webform_submission_workflow', 'approved', "<" . $to . ">", $language, $mail_params, $from);
+		if ($message['result']) {
+			drupal_set_message(t('E-mail notification was sent to ' . $to));
+		} else {
+			drupal_set_message(t('Unable to send e-mail.'), 'error');
+		}
+
+	} else {
+		drupal_set_message(t('Unable to send e-mail. No recipient was specified.'), 'error');
+	}
+}
+
+/**
+ * Build and send notification email.
+ */
+
+function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $submission) {
+
+	$pet = pet_load($petname);
+	$attachments;
+	$attach = false;
+	//find out if we should be attaching files to the email message
+	$pos = strpos($pet -> mail_body, '%value[include_attachments]');
+
+	// Note our use of ===.  Simply == would not work as expected
+	if ($pos === false) {
+		$attach = false;
+	} else {
+		$attach = true;
+		$pet -> mail_body = str_replace('%value[include_attachments]', "", $pet -> mail_body);
+	}
+
+	//cycle through the submission values and replace the webform tokens in the body
+ 		$file = 0;
+		foreach ($node->webform['components'] as $component) {
+
+			if (isset($submission -> data[$component['cid']]['value'][0])) {
+
+				$search = '%value[' . $component['form_key'] . ']';
+
+
+				if (webform_component_feature($component['type'], 'attachment') ) {
+					$file_object = webform_get_file($submission -> data[$component['cid']]['value'][0]);
+					if ($file_object && ($file_object -> filepath = drupal_realpath($file_object -> uri))) {						
+						//attach to email
+						if ($attach) {
+							$attachments[$file] = array('filepath' => $file_object -> uri, 'filename' => $file_object -> filename, 'filemime' => file_get_mimetype($file_object -> uri), );
+
+							$file++;
+						}
+						//use this to insert the link to the file in the email
+						$replace = file_create_url($file_object -> uri);
+
+					}
+				}elseif (! empty($component['extra']['encrypt'])) {
+					$replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+				} else {
+					$replace = $submission -> data[$component['cid']]['value'][0];
+				}
+
+				//replace token in mail body (follows same convention as email replacement in webform, %value[key])
+				$pet -> mail_body = str_replace($search, $replace, $pet -> mail_body);
+
+			}
+		}
+
+	array_push($ccarray, $to);
+
+//check if sender or recipients have been set in the template
+	$from;
+	if ($pet -> from_override) {
+		$from = $pet -> from_override;
+	} else {
+		$from = variable_get('site_mail', ini_get('sendmail_from'));
+	}
+	//since these are being sent one at a time, all cc's end up being bcc
+	if(! empty($pet->cc_default)){
+		array_push($ccarray, $pet->cc_default);
+	}
+	if(! empty($pet->bcc_default)){
+		array_push($ccarray, $pet->bcc_default);
+	}
+	foreach ($ccarray as $recipient) {
+
+		if (valid_email_address($recipient)) {
+			$params = array('pet_from' => $from, 'pet_to' => $recipient, 'pet_recipients' => $ccarray, 'pet_uid' => $submission -> uid, 'attachments' => $attachments, );
+			pet_send_one_mail($pet, $params);
+			drupal_set_message(t('E-mail notification was sent to ' . $recipient));
+		}
+
+	}
+
+	$record = array('webform' => $node -> nid, 'pet' => $petname, 'submission' => $submission -> sid, 'last' => time(), );
+	$result = drupal_write_record('webform_submission_workflow', $record);
+}
+
+/**
+ * Implements hook_mail()
+ */
+function webform_submission_workflow_mail($key, &$message, $mail_params) {
+	$message['headers'] = array_merge($message['headers'], $mail_params['headers']);
+	$message['subject'] = $mail_params['subject'];
+	$message['body'] = $mail_params['message'];
+}
+
+/**
+ * This function makes updating/accessing form components and data more flexible by allowing retrieval by key
+ **/
+function _component_mapping($node) {
+	$mapping = array();
+	$components = $node -> webform['components'];
+	foreach ($components as $i => $component) {
+		$key = $component['form_key'];
+		$mapping[$key] = $i;
+	}
+	return $mapping;
+}
+
+/**
+ * Get an option list of all pet templates.
+ */
+function _get_pet_templates() {
+	$result = db_query("SELECT name, title FROM pets");
+	$options = array();
+	foreach ($result as $record) {
+		//see if this email has been sent before
+		$name = $record -> name;
+		$result2 = db_query('SELECT last FROM webform_submission_workflow WHERE pet = :pet', array(':pet' => $name));
+		$last = "";
+		foreach ($result2 as $record2) {
+			$last = " (Last sent on: " . format_date($record2 -> last, 'medium') . ")";
+		}
+
+		$options["{$record->name}"] = $record -> title . $last;
+
+	}
+
+	return $options;
+}

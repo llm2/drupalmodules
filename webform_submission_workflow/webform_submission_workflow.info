@@ -1,0 +1,8 @@
+name = Webform Submission Workflow
+core = 7.x
+description = "Custom workflow module for webform submissions"
+package = Webform
+files[] = webform_submission_workflow.module
+dependencies[] = webform
+dependencies[] = pet
+dependencies[] = encrypt

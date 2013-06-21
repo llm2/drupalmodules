@@ -1,0 +1,112 @@
+<?php
+/**
+* When a webform submission is received, check if netid is included and create a new user if needed; associate user with submission
+*
+**/
+
+/**
+* hook_webform_submission_presave
+*
+* @param $node
+*   The Webform node on which this submission was made.
+* @param $submission
+*   The Webform submission that is about to be saved to the database.
+*/
+function netid_user_webform_submission_presave($node, &$submission) {
+	
+//does submission include netid?
+//check if there is already a user
+//or create a new one
+//add netid_email to submission if field exists
+//add first and last name if exist
+
+	$mapping = _netid_user_webform_component_mapping($node);
+	$netid = array_key_exists('netid', $mapping) && $submission->data[$mapping['netid']]['value'][0]? $submission->data[$mapping['netid']]['value'][0] : '';
+	//trim spaces, check for @nyu.edu on end
+	$netid = trim(current(explode("@", $netid)));
+	$first = array_key_exists('first_name', $mapping) && $submission->data[$mapping['first_name']]['value'][0]? $submission->data[$mapping['first_name']]['value'][0] : '';
+	$last = array_key_exists('last_name', $mapping) && $submission->data[$mapping['last_name']]['value'][0]? $submission->data[$mapping['last_name']]['value'][0] : '';
+	$newname = $first . " " . $last;
+
+	//make sure email address is set before email notifications sent
+	if($netid && array_key_exists('netid_email', $mapping)){
+		$submission->data[$mapping['netid_email']]['value'][0] = $netid . "@nyu.edu";
+	}
+	if($newname && array_key_exists('email_subject', $mapping)){
+		$submission->data[$mapping['email_subject']]['value'][0] = $node->title . ": " .$newname;
+	}
+
+	$account = _netid_user_get_user_from_netid($netid);
+
+	if(!$account){
+		$account = _netid_user_create_user($netid);
+		if($newname && $account){			
+			
+			db_insert('field_data_field_display_name')
+          ->fields(array(
+              'entity_type' => 'user',
+              'entity_id' => $account->uid,
+              'field_display_name_value' => $newname,
+              'language'=>'und',
+			  'delta'=>0,
+              ))
+          ->execute();			
+		}
+	}
+	if(isset($account) && $account->uid > 0){
+		$submission->uid = $account->uid;
+	}
+	
+}
+
+
+/**
+* Find user uid from netid 
+*
+* @param $netid
+*   nyu based netid 
+*/
+
+function _netid_user_get_user_from_netid($netid){
+	$account = user_load_by_name($netid);
+	if($account){
+		$msg = t('Account exists %name ', array('%name' => "$netid"));
+  		//drupal_set_message($msg);
+  		watchdog('User from Webform', $msg);
+		return $account;
+	}
+	return null;
+}
+/**
+* create user with  netid 
+*
+* @param $netid
+*   nyu based netid 
+*/
+function _netid_user_create_user($netid){
+	if (preg_match("/^[A-Za-z]{2,}(\d+)$/", $netid)){
+		$newemail = "$netid" . "@nyu.edu";
+		$newUser = array(
+  			'name' => "$netid",
+  			'mail' => "$newemail",
+  			'status' => 1
+		);
+		$account = user_save(null, $newUser);
+		$msg = t('New user account: %name ', array('%name' => "$netid"));
+  		//drupal_set_message($msg);
+  		watchdog('User from Webform', $msg);
+		return $account;
+	}
+	
+	return null;
+}
+
+function _netid_user_webform_component_mapping($node) {
+  $mapping = array();
+  $components = $node->webform['components'];
+  foreach ($components as $i => $component) {
+    $key = $component['form_key'];
+    $mapping[$key] = $i;
+  }
+  return $mapping;
+}
