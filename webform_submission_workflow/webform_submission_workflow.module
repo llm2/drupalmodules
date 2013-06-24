@@ -256,7 +256,13 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 
 					}
 				}elseif (! empty($component['extra']['encrypt'])) {
-					$replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+						global $user;
+						$account = user_load($user->uid);
+						if (user_access('view encrypted values', $account)) {
+							$replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+						}else{
+							$replace = "No access";
+						}
 				} else {
 					$replace = $submission -> data[$component['cid']]['value'][0];
 				}
