@@ -1,0 +1,14 @@
+name = Webform Report
+description = Allows users to create reports from webform data.
+dependencies[] = webform
+dependencies[] = webform_encrypt
+files[] = webform_report.inc
+core = 7.x
+package = Webform
+
+; Information added by drupal.org packaging script on 2011-11-16
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "webform_report"
+datestamp = "1321405010"
+
