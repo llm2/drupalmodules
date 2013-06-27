@@ -135,7 +135,7 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 
 	$form['item1']['tr_start_1'] = array('#markup' => '<tr>');
 
-	$pet_templates = _get_pet_templates();
+	$pet_templates = _get_pet_templates($submission->sid);
 	$matching_templates = array();
 	$preview_markup = "";
 	foreach ($pet_templates as $k => $v) {
@@ -298,9 +298,14 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 		}
 
 	}
+//check if record exists, then update, or create new record
+	db_merge('webform_submission_workflow')
+  ->key(array('webform' => $node -> nid, 'pet' => $petname, 'submission' => $submission -> sid,))
+  ->fields(array(
+      'last' => time(),
+  ))
+  ->execute();
 
-	$record = array('webform' => $node -> nid, 'pet' => $petname, 'submission' => $submission -> sid, 'last' => time(), );
-	$result = drupal_write_record('webform_submission_workflow', $record);
 }
 
 /**
@@ -328,13 +333,13 @@ function _component_mapping($node) {
 /**
  * Get an option list of all pet templates.
  */
-function _get_pet_templates() {
+function _get_pet_templates($sid) {
 	$result = db_query("SELECT name, title FROM pets");
 	$options = array();
 	foreach ($result as $record) {
 		//see if this email has been sent before
 		$name = $record -> name;
-		$result2 = db_query('SELECT last FROM webform_submission_workflow WHERE pet = :pet', array(':pet' => $name));
+		$result2 = db_query('SELECT last FROM webform_submission_workflow WHERE pet = :pet AND submission = :sid', array(':pet' => $name, ':sid' => $sid));
 		$last = "";
 		foreach ($result2 as $record2) {
 			$last = " (Last sent on: " . format_date($record2 -> last, 'medium') . ")";
