@@ -28,6 +28,13 @@ function netid_user_webform_submission_presave($node, &$submission) {
 	$last = array_key_exists('last_name', $mapping) && $submission->data[$mapping['last_name']]['value'][0]? $submission->data[$mapping['last_name']]['value'][0] : '';
 	$newname = $first . " " . $last;
 
+	$universityid="";
+	if(array_key_exists('uid', $mapping) && $submission->data[$mapping['uid']]['value'][0]){
+		$universityid = $submission->data[$mapping['uid']]['value'][0];
+	}elseif(array_key_exists('universityid', $mapping) && $submission->data[$mapping['universityid']]['value'][0]){
+		$universityid = $submission->data[$mapping['universityid']]['value'][0];
+	}
+
 	//make sure email address is set before email notifications sent
 	if($netid && array_key_exists('netid_email', $mapping)){
 		$submission->data[$mapping['netid_email']]['value'][0] = $netid . "@nyu.edu";
@@ -47,6 +54,18 @@ function netid_user_webform_submission_presave($node, &$submission) {
               'entity_type' => 'user',
               'entity_id' => $account->uid,
               'field_display_name_value' => $newname,
+              'language'=>'und',
+			  'delta'=>0,
+              ))
+          ->execute();			
+		}
+		if($universityid && $account){			
+			
+			db_insert('field_data_field_uid')
+          ->fields(array(
+              'entity_type' => 'user',
+              'entity_id' => $account->uid,
+              'field_uid_value' => $universityid,
               'language'=>'und',
 			  'delta'=>0,
               ))
