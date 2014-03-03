@@ -54,6 +54,9 @@ function webform_submission_workflow_status_submit($form, &$form_state) {
 
 	$mapping = _component_mapping($node);
 	$submission -> data[$mapping['status']]['value'][0] = $action;
+	
+	//aditional files to attach to email
+	$addfiles = array();
 
 	if (webform_submission_update($node, $submission)) {
 		drupal_set_message("Request " . $action);
@@ -64,8 +67,14 @@ function webform_submission_workflow_status_submit($form, &$form_state) {
 
 	// Send notification email.
 	//webform_submission_workflow_status_email($form_state['values']['item2']['email'], $form_state['values']['item2']['cc'],$form_state['values']['item0']['from'], $node->title . ' ' . $action, 'Your request has been ' . $action . ".\n\n" . $message);
+	
+	foreach($form_state['values']['item3']['file'] as $k => $v){
+		if($v > 0){
+			array_push($addfiles, $k);
+		}
+	}
 
-	webform_submission_workflow_pet_email($form_state['values']['item1']['pet'], $form_state['values']['item2']['email'], $form_state['values']['item2']['cc'], $node, $submission);
+	webform_submission_workflow_pet_email($form_state['values']['item1']['pet'], $form_state['values']['item2']['email'], $form_state['values']['item2']['cc'], $node, $submission, $addfiles);
 
 }
 
@@ -166,6 +175,24 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 	$form['item2']['tr_end_1'] = array('#markup' => '</tr>');
 
 	$form['item2']['table_end'] = array('#markup' => '</tbody></table>');
+	
+	
+	//files
+	
+	$form['item3']['table_start'] = array('#markup' => '<table><thead><tr><th>Choose Files to Attach</th></tr></thead><tbody>');
+
+	$form['item3']['tr_start_1'] = array('#markup' => '<tr>');
+
+	//$form['item3']['file'] = array('#type' => 'radios', '#options' => $options, '#prefix' => '<td>', '#suffix' => '</td>', );
+	$form['item3']['file'] = array('#type' => 'checkboxes', '#options' => _get_user_files($submission->data[$mapping['netid']]['value'][0]), '#prefix' => '<td>', '#suffix' => '</td>', );
+
+	$form['item3']['tr_end_1'] = array('#markup' => '</tr>');
+
+	$form['item3']['table_end'] = array('#markup' => '</tbody></table>');
+	
+	//files
+	
+	
 
 	$form['actions']['status'] = array('#type' => 'submit', '#value' => t('Submit'), );
 
@@ -217,13 +244,18 @@ function webform_submission_workflow_status_email($to, $ccarray, $from, $subject
  * Build and send notification email.
  */
 
-function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $submission) {
+function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $submission, $addfiles) {
 
 	$pet = pet_load($petname);
-	$attachments;
+	$attachments = array();
 	$attach = false;
 	//find out if we should be attaching files to the email message
 	$pos = strpos($pet -> mail_body, '%value[include_attachments]');
+
+	//attach any additional files from the request (e.g., from other form submissions
+	if(sizeof($addfiles) > 0){
+		$pos=true;		  
+	}
 
 	// Note our use of ===.  Simply == would not work as expected
 	if ($pos === false) {
@@ -234,12 +266,22 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 	}
 
 	//cycle through the submission values and replace the webform tokens in the body
- 		$file = 0;
+ 		$fileIndex = 0;
+		$replace = "";
+		$search = "";
+		
+		foreach($addfiles as $fid){
+			$file_object = webform_get_file($fid);
+			$attachments[$fileIndex] = array('filepath' => $file_object -> uri, 'filename' => $file_object -> filename, 'filemime' => file_get_mimetype($file_object -> uri), );
+			$fileIndex++;
+		}		
+		
 		foreach ($node->webform['components'] as $component) {
-
-			if (isset($submission -> data[$component['cid']]['value'][0])) {
-
 				$search = '%value[' . $component['form_key'] . ']';
+
+			if (!empty($submission -> data[$component['cid']]['value'][0])) {
+
+				//$search = '%value[' . $component['form_key'] . ']';
 
 
 				if (webform_component_feature($component['type'], 'attachment') ) {
@@ -247,30 +289,33 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 					if ($file_object && ($file_object -> filepath = drupal_realpath($file_object -> uri))) {						
 						//attach to email
 						if ($attach) {
-							$attachments[$file] = array('filepath' => $file_object -> uri, 'filename' => $file_object -> filename, 'filemime' => file_get_mimetype($file_object -> uri), );
+							$attachments[$fileIndex] = array('filepath' => $file_object -> uri, 'filename' => $file_object -> filename, 'filemime' => file_get_mimetype($file_object -> uri), );
 
-							$file++;
+							$fileIndex++;
 						}
 						//use this to insert the link to the file in the email
 						$replace = file_create_url($file_object -> uri);
 
 					}
-				}elseif (! empty($component['extra']['encrypt'])) {
+				}elseif (isset($component['extra']['encrypt'])) {
 						global $user;
 						$account = user_load($user->uid);
 						if (user_access('view encrypted values', $account)) {
-							$replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+							if(!($submission -> data[$component['cid']]['value'][0] == "")){
+							 $replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+							}
 						}else{
 							$replace = "No access";
 						}
-				} else {
-					$replace = $submission -> data[$component['cid']]['value'][0];
-				}
 
+				} else {
+					$replace = $submission->data[$component['cid']]['value'][0];
+				}
+			}
 				//replace token in mail body (follows same convention as email replacement in webform, %value[key])
 				$pet -> mail_body = str_replace($search, $replace, $pet -> mail_body);
 
-			}
+
 		}
 
 	array_push($ccarray, $to);
@@ -350,4 +395,36 @@ function _get_pet_templates($sid) {
 	}
 
 	return $options;
+}
+
+/**
+ * Get a list of files associated with the user
+ */
+function _get_user_files($netid) {
+	
+	$account = user_load_by_name($netid);
+	$file_names = array();
+	if($account != null){
+
+		$result = db_query("
+      SELECT w.nid, c.name, c.type, c.cid, d.nid, d.sid, d.data, s.uid, u.name as user, s.submitted
+      FROM {webform} w
+      LEFT JOIN {webform_submitted_data} d ON w.nid = d.nid
+      LEFT JOIN {webform_component} c ON d.cid = c.cid
+      LEFT JOIN {webform_submissions} s  ON d.sid = s.sid
+      LEFT JOIN {users} u ON s.uid = u.uid
+      WHERE d.nid = c.nid 
+      AND c.nid = s.nid
+      AND u.uid = :uid", array(':uid' => $account->uid));
+		
+		foreach ($result as $record) {
+			if($record->type == "file"){
+				$file = webform_get_file($record->data);
+				$file_names[$record->data] = $record->name . ": " . $file->filename ;
+			}
+
+		}
+
+	}	
+	return $file_names;
 }
