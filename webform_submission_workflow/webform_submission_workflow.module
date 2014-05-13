@@ -159,9 +159,13 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 		}
 	}
 
-	$form['item1']['pet'] = array('#type' => 'radios', '#options' => $matching_templates, '#prefix' => '<td>', '#suffix' => '</td>', );
-
-	$form['item1']['pet2'] = array('#type' => 'markup', '#markup' => $preview_markup, '#prefix' => '<td>', '#suffix' => '</td>', );
+	if(sizeof($matching_templates) > 0){
+		$form['item1']['pet'] = array('#type' => 'radios', '#options' => $matching_templates, '#prefix' => '<td>', '#suffix' => '</td>', );
+		$form['item1']['pet2'] = array('#type' => 'markup', '#markup' => $preview_markup, '#prefix' => '<td>', '#suffix' => '</td>', );
+	}else{
+		$form['item1']['pet'] = array('#markup' => '<td>No workflow e-mail templates found</td>', );
+		$form['item1']['pet2'] = array('#markup' => '<td></td>', );
+	}
 
 	$form['item1']['table_end'] = array('#markup' => '</tr></tbody></table>');
 
@@ -179,12 +183,16 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 	
 	//files
 	
-	$form['item3']['table_start'] = array('#markup' => '<table><thead><tr><th>Choose Files to Attach</th></tr></thead><tbody>');
+	$form['item3']['table_start'] = array('#markup' => '<table><thead><tr><th>Choose Files to Attach (Optional)</th></tr></thead><tbody>');
 
 	$form['item3']['tr_start_1'] = array('#markup' => '<tr>');
 
-	//$form['item3']['file'] = array('#type' => 'radios', '#options' => $options, '#prefix' => '<td>', '#suffix' => '</td>', );
-	$form['item3']['file'] = array('#type' => 'checkboxes', '#options' => _get_user_files($submission->data[$mapping['netid']]['value'][0]), '#prefix' => '<td>', '#suffix' => '</td>', );
+	$userfiles = _get_user_files($submission->data[$mapping['netid']]['value'][0]);
+	if(sizeof($userfiles) > 0){
+		$form['item3']['file'] = array('#type' => 'checkboxes', '#options' => $userfiles, '#prefix' => '<td>', '#suffix' => '</td>', );
+	}else{
+		$form['item3']['file'] = array('#markup' => '<td>No files found</td>', );
+	}
 
 	$form['item3']['tr_end_1'] = array('#markup' => '</tr>');
 
@@ -279,10 +287,7 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 		foreach ($node->webform['components'] as $component) {
 				$search = '%value[' . $component['form_key'] . ']';
 
-			if (!empty($submission -> data[$component['cid']]['value'][0])) {
-
-				//$search = '%value[' . $component['form_key'] . ']';
-
+			if (isset($submission -> data[$component['cid']]['value'][0])) {
 
 				if (webform_component_feature($component['type'], 'attachment') ) {
 					$file_object = webform_get_file($submission -> data[$component['cid']]['value'][0]);
@@ -297,12 +302,14 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 						$replace = file_create_url($file_object -> uri);
 
 					}
-				}elseif (isset($component['extra']['encrypt'])) {
+				}elseif ($component['extra']['encrypt'] == 1) {
 						global $user;
 						$account = user_load($user->uid);
 						if (user_access('view encrypted values', $account)) {
-							if(!($submission -> data[$component['cid']]['value'][0] == "")){
-							 $replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+							if(isset($submission -> data[$component['cid']]['value'][0]) && !$submission -> data[$component['cid']]['value'][0] == ""){
+							 	$replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+							}else{
+								$replace="";	
 							}
 						}else{
 							$replace = "No access";
@@ -313,9 +320,8 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 				}
 			}
 				//replace token in mail body (follows same convention as email replacement in webform, %value[key])
-				$pet -> mail_body = str_replace($search, $replace, $pet -> mail_body);
-
-
+			$pet -> mail_body = str_replace($search, $replace, $pet -> mail_body);
+			$replace="";
 		}
 
 	array_push($ccarray, $to);
@@ -417,11 +423,22 @@ function _get_user_files($netid) {
       AND c.nid = s.nid
       AND u.uid = :uid", array(':uid' => $account->uid));
 		
-		foreach ($result as $record) {
-			if($record->type == "file"){
-				$file = webform_get_file($record->data);
-				$file_names[$record->data] = $record->name . ": " . $file->filename ;
-			}
+                foreach ($result as $record) {
+                        if($record->type == "file"){
+                                $fid = $record->data;
+                                $label = $record->name;
+                                $file;
+                                $filename = "";
+                                if(! empty($fid) && is_numeric($fid)){
+                                        $file = file_load($fid);
+                                }
+                                if(isset($file)){
+                                        $filename = $file->filename;
+                                }
+                                if(isset($fid) && isset($label) && isset($filename)){
+                                        $file_names[$fid] = $label . ": <a href=\"" . file_create_url($file->uri) . "\" target=_blank>" . $filename . "</a>";
+                                }
+                        }
 
 		}
 
