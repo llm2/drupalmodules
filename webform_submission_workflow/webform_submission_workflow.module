@@ -279,9 +279,17 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 		$search = "";
 		
 		foreach($addfiles as $fid){
-			$file_object = webform_get_file($fid);
-			$attachments[$fileIndex] = array('filepath' => $file_object -> uri, 'filename' => $file_object -> filename, 'filemime' => file_get_mimetype($file_object -> uri), );
-			$fileIndex++;
+			$file_object = file_load($fid);
+			if ($file_object && ($file_object -> filepath = drupal_realpath($file_object -> uri))) {						
+				$new_file = array(
+					"filepath" => $file_object->uri,
+					"filename" => $file_object->filename,
+					"filemime" => file_get_mimetype($file_object->uri)
+
+				);
+				$attachments[$fileIndex] = $new_file;
+				$fileIndex++;
+			}
 		}		
 		
 		foreach ($node->webform['components'] as $component) {
@@ -294,8 +302,13 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 					if ($file_object && ($file_object -> filepath = drupal_realpath($file_object -> uri))) {						
 						//attach to email
 						if ($attach) {
-							$attachments[$fileIndex] = array('filepath' => $file_object -> uri, 'filename' => $file_object -> filename, 'filemime' => file_get_mimetype($file_object -> uri), );
+							$new_file = array(
+							"filepath" => $file_object->uri,
+							"filename" => $file_object->filename,
+							"filemime" => file_get_mimetype($file_object->uri)
 
+							);
+							$attachments[$fileIndex] = $new_file;
 							$fileIndex++;
 						}
 						//use this to insert the link to the file in the email
