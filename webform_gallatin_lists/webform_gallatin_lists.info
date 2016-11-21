@@ -1,0 +1,7 @@
+name = Webform Gallatin Lists 
+description = Adds pre-built option lists of Vocabularies to be used in webform components.
+package = Webform
+core = 7.x
+version = "7.x-4.0"
+core = "7.x"
+project = "webform_gallatin_lists"
