@@ -80,7 +80,7 @@ function webform_encrypt_webform_submission_presave($node, &$submission) {
   foreach ($submission->data as $cid => $entry) {
     if (isset($node->webform['components'][$cid]['extra']['encrypt']) &&
         $node->webform['components'][$cid]['extra']['encrypt']) {
-      	$submission->data[$cid]['value'][0] = encrypt($entry['value'][0], array('base64' => TRUE));
+      	$submission->data[$cid][0] = encrypt($entry[0], array('base64' => TRUE));
     }
   }
 }
@@ -106,7 +106,7 @@ function webform_encrypt_webform_submission_presave($node, &$submission) {
         $renderable['#node']->webform['components'][$cid]['extra']['encrypt']) {
       $form_key = $renderable['#node']->webform['components'][$cid]['form_key'];
       if (user_access('view encrypted values', $account)) {
-        $renderable[$form_key]['#value'] = decrypt($entry['value'][0], array('base64' => TRUE));
+        $renderable[$form_key]['#value'] = decrypt($entry[0], array('base64' => TRUE));
       } else {
         $renderable[$form_key]['#value'] = t('[Value Encrypted]');
       }
@@ -131,16 +131,16 @@ function webform_encrypt_webform_submission_load(&$submissions){
 	 		if (isset($node->webform['components'][$cid]['extra']['encrypt']) &&
         		$node->webform['components'][$cid]['extra']['encrypt']) {
     	  		if (user_access('view encrypted values', $account)) {
-					//if(isset($entry['value'][0])){
-   	     				$submission->data[$cid]['value'][0] = decrypt($entry['value'][0], array('base64' => TRUE));
+					//if(isset($entry[0])){
+   	     				$submission->data[$cid][0] = decrypt($entry[0], array('base64' => TRUE));
 					//}else{
-					//	$submission->data[$cid]['value'][0] = "TEST";
+					//	$submission->data[$cid][0] = "TEST";
 					//}
    	   			} else {
-     	   			$submission->data[$cid]['value'][0] = t('[Value Encrypted]');
+     	   			$submission->data[$cid][0] = t('[Value Encrypted]');
    	   			}
 			}else{
-					$submission->data[$cid]['value'][0] = $entry['value'][0];
+					$submission->data[$cid][0] = $entry[0];
 			}
     	}
   	}
