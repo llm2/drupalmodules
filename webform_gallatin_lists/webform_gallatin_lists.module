@@ -135,6 +135,9 @@ function _class_advisers($component, $flat, $arguments) {
   );
 }
 
+/**
+ * Options list containing Academic advisers.
+ */
 function _academic_advisers($component, $flat, $arguments) {
 	return array(
 	'na19@nyu.edu' => t('Nancy Agabian'),
@@ -214,7 +217,7 @@ function _academic_advisers($component, $flat, $arguments) {
 	'elm1@nyu.edu' => t('Edward Melnick'),
 	'em113@nyu.edu' => t('Eve Meltzer'),
 	'km96@nyu.edu' => t('Keith Miller'),
-	'mm11@nyu.edu' => t('Bella Mirabella'),
+	'mm11@nyu.edu' => t('Mary Mirabella'),
 	'am128@nyu.edu' => t('Ali Mirsepassi'),
 	'mm6439@nyu.edu' => t('Meleko Mokgosi'),
 	'sem2@nyu.edu' => t('Sara Murphy'),
@@ -224,7 +227,7 @@ function _academic_advisers($component, $flat, $arguments) {
 	'akp220@nyu.edu' => t('Amanda Petrusich'),
 	'kpf2@nyu.edu' => t('Kimberly Phillips-Fein'),
 	'sep1@nyu.edu' => t('Stacy Pies'),
-	'mp993@nyu.edu' => t('Millery Polyné'),
+	'mp993@nyu.edu' => t('Millery Polyne'),
 	'tp32@nyu.edu' => t('Todd Burke Porterfield'),
 	'kop2001@nyu.edu' => t('Kathryn Posin'),
 	'jrp6@nyu.edu' => t('Robin Powell'),
@@ -251,7 +254,7 @@ function _academic_advisers($component, $flat, $arguments) {
 	'ms5100@nyu.edu' => t('Matthew Stanley'),
 	'kms5@nyu.edu' => t('Kristi Steinmetz'),
 	'jkt1@nyu.edu' => t('John Tchen'),
-	'mlt8@nyu.edu' => t('Meredith Theeman'),
+	'mlt8@nyu.edu' => t('Meredith  Theeman'),
 	'st35@nyu.edu' => t('Selma Thompson'),
 	'yt21@nyu.edu' => t('Yevgeniya Traps'),
 	'ct36@nyu.edu' => t('Christopher Trogan'),
@@ -265,7 +268,7 @@ function _academic_advisers($component, $flat, $arguments) {
 }
 
 /**
- * Options list containing Class Advisers and emails.
+ * Options list containing AP Courses.
  */
 function _ap_courses($component, $flat, $arguments) {
   return array(
@@ -277,6 +280,7 @@ function _ap_courses($component, $flat, $arguments) {
             'Chinese Language and Culture' => t('Chinese Language and Culture'),
             'Computer Science A' => t('Computer Science A'),
             'Computer Science AB' => t('Computer Science AB'),
+            'Computer Science Principles' => t('Computer Science Principles'),
             'English Literature' => t('English Literature'),
             'Environmental Science' => t('Environmental Science'),
             'European History' => t('European History'),
