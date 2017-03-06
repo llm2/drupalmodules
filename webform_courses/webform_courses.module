@@ -1,0 +1,62 @@
+<?php
+/**
+* When a webform includes course selection fields, autocomplete related fields
+* drupal_add_js
+* Install: add data structure for courses -- Actually, it's a lot of data, better to create an external API
+* How do we update course data?
+* Autocomplete works either on course number or on course title? course number would be simpler
+* JSON must contain all fields 
+* Once user chooses a course, JS takes over and fills other fields from JSON object
+* Should be re-usable, but also need to add it to existing fields
+**/
+
+/**
+ * Implements hook_form_alter().
+ */
+function webform_courses_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'webform_client_form_43') {
+    drupal_add_library('system', 'ui.autocomplete');
+
+     drupal_add_js('sites/all/modules/webform_courses/js/webform_courses.js', 'file');
+  //add autocomplete handler for properties
+    //$form['submitted']['course_1']['course_title1']['#autocomplete_path'] = 'course_title1/autocomplete';
+  }
+}
+ 
+/**
+ * Implements hook_menu().
+ */
+/*function webform_courses_menu() {
+  $items = array();
+ 
+  $items['course_title1/autocomplete'] = array(
+    'title' => 'course_title1 autocomplete',
+    'page callback' => '_webform_courses_autocomplete',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+ 
+  return $items;
+}*/
+ 
+/**
+ * Retrieve a JSON object containing autocomplete suggestions for node titles.
+ */
+/*function _webform_courses_autocomplete($string = '') {
+  $matches = array();
+  $matches["World Cultures: Asia"] = array(
+    'title' => 'World Cultures: Asia',
+    'subject' => 'ANTH1-UC',
+    'course' => '5013',
+    'class' => '1033'
+    );
+    $matches["Language & Society"] = array(
+    'title' => 'Language & Society',
+    'subject' => 'ANTH1-UC',
+    'course' => '5013',
+    'class' => '1033'
+    );
+    drupal_json_output($matches);
+}
+*/

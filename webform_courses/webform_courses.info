@@ -1,0 +1,8 @@
+name = Webform Courses 
+description = Enables Drupal core AJAX autocomplete widget for a Webform textfield.
+ 
+core = 7.x
+package = Webform
+dependencies[] = webform
+ 
+files[] = webform_courses.module
