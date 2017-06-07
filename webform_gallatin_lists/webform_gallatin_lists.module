@@ -32,6 +32,22 @@ function webform_gallatin_lists_webform_select_options_info() {
     'options callback' => '_ap_courses',
     'file' => 'includes/webform.options.inc',
   );
+  
+  $items['affinity_groups'] = array(
+    'title' => t('Affinity Groups'),
+    'options callback' => '_affinity_groups',
+    'file' => 'includes/webform.options.inc',
+  );
+    $items['lahc'] = array(
+    'title' => t('LAHC Requirements'),
+    'options callback' => '_lahc',
+    'file' => 'includes/webform.options.inc',
+  );
+  $items['alum'] = array(
+    'title' => t('Alumni Years'),
+    'options callback' => '_alum',
+    'file' => 'includes/webform.options.inc',
+  );
   return $items;
 }
 
@@ -223,6 +239,7 @@ function _academic_advisers($component, $flat, $arguments) {
 	'sem2@nyu.edu' => t('Sara Murphy'),
 	'cn23@nyu.edu' => t('Chitra Neogy'),
 	'vn10@nyu.edu' => t('Vasuki Nesiah'),
+    'ao639@nyu.edu' => t('Anastasiya Osipova'),
 	'ccp1@nyu.edu' => t('Crystal Parsons'),
 	'akp220@nyu.edu' => t('Amanda Petrusich'),
 	'kpf2@nyu.edu' => t('Kimberly Phillips-Fein'),
@@ -305,4 +322,64 @@ function _ap_courses($component, $flat, $arguments) {
             'U.S. History' => t('U.S. History'),
             'World History' => t('World History')
   );
+}
+
+/**
+ * Options list containing Affinity groups.
+ */
+function _affinity_groups($component, $flat, $arguments) {
+  return array(
+'Activism and Human Rights' => t('Activism and Human Rights'),
+'Art' => t('Art'),
+'Business' => t('Business'),
+'Computer Science' => t('Computer Science'),
+'Data Science' => t('Data Science'),
+'Fashion' => t('Fashion'),
+'Film and TV' => t('Film and TV'),
+'Finance/Economics' => t('Finance/Economics'),
+'Gender Studies' => t('Gender Studies'),
+'History' => t('History'),
+'Literature' => t('Literature'),
+'Media and Journalism' => t('Media and Journalism'),
+'Music' => t('Music'),
+'Performing Arts' => t('Performing Arts'),
+'Psychology' => t('Psychology'),
+'Sustainability and Environment' => t('Sustainability and Environment'),
+'Writing' => t('Writing')
+  );
+}
+
+
+/**
+ * Options list 
+ */
+function _lahc($component, $flat, $arguments) {
+  return array(
+
+'Liberal Arts Requirement' => array(
+    'Humanities' => t('Humanities'),
+    'Social Science' => t('Social Science'),
+    'Science' => t('Science')
+    ),
+// — Second option group
+'Historical and Cultural Requirement' => array(
+    'Premodern' => t('Premodern'),
+    'Early Modern' => t('Early Modern'),
+    'Global Cultures' => t('Global Cultures')
+    )
+  );
+}
+
+/**
+ * Options list 
+ */
+function _alum($component, $flat, $arguments) {
+ $a = array();
+ $start = 1973;
+ $end = date("Y") + 10;
+    for ($x = $start; $x <= $end; $x++) {
+    array_push($a,$x);
+    } 
+
+    return $a;
 }
