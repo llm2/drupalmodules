@@ -1,0 +1,11 @@
+name = Webform Gallatin Validation
+description = Adds Gallatin-specific webform validation options.
+package = Webform
+version = "1.0"
+core = "7.x"
+project = "webform_gallatin_validation"
+
+files[] = webform_gallatin_validation.module
+
+dependencies[] = webform
+dependencies[] = webform_validation

@@ -1,0 +1,106 @@
+<?php
+
+/**
+ * Implements hook_webform_validation_validators().
+ */
+function webform_gallatin_validation_webform_validation_validators() {
+  return array(
+
+    'validate_netid' => array(
+      'name' => "NetID Validation",
+      'description' => "Validate NetID",
+      'component_types' => array(
+        'textfield',
+        ),
+      ),
+
+     'validate_universityid' => array(
+      'name' => "University ID Validation",
+      'description' => "Validate University ID",
+      'component_types' => array(
+        'textfield',
+        ),
+      )
+
+  );
+    watchdog('Gallatin Validation', "netid added");
+    drupal_add_js('sites/all/modules/webform_gallatin_validation/js/webform_gallatin_validation.js', 'file');
+
+}
+
+/**
+ * Implements hook_webform_validation_validate().
+ */
+function webform_gallatin_validation_webform_validation_validate($validator_name, $items, $components, $rule) {
+  if ($items) {
+    switch ($validator_name) {
+      case 'validate_netid':
+        $errors = array();
+        foreach ($items as $key => $val) {
+          if ($val && (!preg_match("/^[A-Za-z]{2,}(\d+)/", $val))) {
+            $errors[$key] = t('%item is not a valid NetID', array('%item' => $components[$key]['name']));
+          }
+        }
+        return $errors;
+        break;
+
+      case 'validate_universityid':
+        $errors = array();
+        foreach ($items as $key => $val) {
+          if ($val && (!preg_match("/^N\d{8}$/", $val))) {
+            $errors[$key] = t('%item is not a valid University ID', array('%item' => $components[$key]['name']));
+          }
+        }
+        return $errors;
+        break;
+    }
+  }
+}
+
+/**
+*
+* Hook for client side validation
+*/
+/*
+function webform_gallatin_validation_clientside_validation_rule_alter (&$js_rules, $element, $context) {
+  switch ($context['type']) {
+    case 'webform':
+      if ($context['rule']['validator'] == 'validate_netid') {
+       _set_validate_netid($element['#name'], $element['#title'], $js_rules, $context['rule']['data'], $context['message']);
+      }
+     if ($context['rule']['validator'] == 'validate_universityid') {
+        //_clientside_validation_set_minmaxlength($component['element_name'], $component['element_title'], $context['rule']['data'], '', $js_rules, $context['message']);
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+
+
+function _set_validate_netid($name, $title, &$js_rules, $expression, $message = '', $modifiers = "", $type = 'regex', $negate = FALSE) {
+  $title = _clientside_validation_set_title($title);
+  if (empty($message)) {
+    $variables = array(
+      'message' => '!title must be a valid NetID.',
+      'placeholders' => array('!title' => $title),
+      'error_type' => $type,
+      'element_name' => $name
+    );
+  }
+  else {
+    $variables = array(
+      'message' => $message,
+      'error_type' => $type,
+      'element_name' => $name
+    );
+  }
+  $message = theme('clientside_error', $variables);
+  $js_rules [$name]['validate_netid'] = array($expression);
+  if (!empty($modifiers)) {
+    $js_rules [$name]['validate_netid'][] = $modifiers;
+  }
+  $js_rules [$name]['messages']['validate_netid'] = $message;
+}
+*/
