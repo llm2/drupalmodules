@@ -47,16 +47,12 @@ function netid_user_webform_submission_presave($node, &$submission) {
 
 	if(!$account){
 		$account = _netid_user_create_user($netid);
-	}
-
-//set name and uid custom fields
-	if($newname && $account){			
+		if($newname && $account){			
 			
-		db_merge('field_data_field_display_name')
-			->key(array('entity_id' => $account->uid))
-        	->fields(array(
+			db_insert('field_data_field_display_name')
+          ->fields(array(
               'entity_type' => 'user',
-             // 'entity_id' => $account->uid,
+              'entity_id' => $account->uid,
               'field_display_name_value' => $newname,
               'language'=>'und',
 			  'delta'=>0,
@@ -65,18 +61,17 @@ function netid_user_webform_submission_presave($node, &$submission) {
 		}
 		if($universityid && $account){			
 			
-		db_merge('field_data_field_uid')
-			->key(array('entity_id' => $account->uid))
-        	->fields(array(
+			db_insert('field_data_field_uid')
+          ->fields(array(
               'entity_type' => 'user',
-            //  'entity_id' => $account->uid,
+              'entity_id' => $account->uid,
               'field_uid_value' => $universityid,
               'language'=>'und',
 			  'delta'=>0,
               ))
           ->execute();			
 		}
-
+	}
 	if(isset($account) && $account->uid > 0){
 		$submission->uid = $account->uid;
 	}
