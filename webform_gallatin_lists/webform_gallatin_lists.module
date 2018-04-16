@@ -184,11 +184,13 @@ function _academic_advisers($component, $flat, $arguments) {
 'tjc202@nyu.edu' => t('Terence Culver'),
 'kad9@nyu.edu' => t('Kimberly DaCosta'),
 'lad421@nyu.edu' => t('Lisa Daily'),
+'md155@nyu.edu' => t('Mehmet Darakcioglu'),
 'ld41@nyu.edu' => t('Lauren Davis'),
 'ad159@nyu.edu' => t('Anne Dewitt'),
 'kkd2000@nyu.edu' => t('Kristoffer Diaz'),
 'mdd3@nyu.edu' => t('Michael Dinwiddie'),
 'sd47@nyu.edu' => t('Stephen Duncombe'),
+'deena@cs.nyu.edu '=> t('Deena Engel'),
 'gte1@nyu.edu' => t('Gregory Erickson'),
 'jaf3@nyu.edu' => t('June Foley'),
 'vf20@nyu.edu' => t('Valerie Forman'),
@@ -202,7 +204,9 @@ function _academic_advisers($component, $flat, $arguments) {
 'lg3@nyu.edu' => t('Lisa Goldfarb'),
 'djg3@nyu.edu' => t('Donna Goodman'),
 'jag17@nyu.edu' => t('Judith Greenberg'),
+'greenspan.lauren@gmail.com' => t('Lauren Greenspan'),
 'mag19@nyu.edu' => t('Matthew Gregory'),
+'pcg207@nyu.edu' => t('Paul Grimstad'),
 'hrg2@nyu.edu' => t('Hannah Gurman'),
 'rh388@nyu.edu' => t('Rahul Hamid'),
 'eh82@nyu.edu' => t('Ethan Harkness'),
@@ -280,7 +284,8 @@ function _academic_advisers($component, $flat, $arguments) {
 'lmw242@nyu.edu' => t('Lauren Walsh'),
 'slw13@nyu.edu' => t('Susanne Wofford'),
 'dmy1@nyu.edu' => t('Duncan Yoon'),
-'ndz204@nyu.edu' => t('Nicole Zeftel')
+'ndz204@nyu.edu' => t('Nicole Zeftel'),
+'write in email' => t('Other')
 	);
 }
 
