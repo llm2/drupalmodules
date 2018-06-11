@@ -13,6 +13,7 @@
 *   The Webform submission that is about to be saved to the database.
 */
 function netid_user_webform_submission_presave($node, &$submission) {
+
 	
 //does submission include netid?
 //check if there is already a user
@@ -21,32 +22,36 @@ function netid_user_webform_submission_presave($node, &$submission) {
 //add first and last name if exist
 
 	$mapping = _netid_user_webform_component_mapping($node);
-	$netid = array_key_exists('netid', $mapping) && $submission->data[$mapping['netid']]['value'][0]? $submission->data[$mapping['netid']]['value'][0] : '';
+
+	$netid = array_key_exists('netid', $mapping) && $submission->data[$mapping['netid']][0]? $submission->data[$mapping['netid']][0] : '';
 	//trim spaces, check for @nyu.edu on end
 	$netid = trim(current(explode("@", $netid)));
-	$first = array_key_exists('first_name', $mapping) && $submission->data[$mapping['first_name']]['value'][0]? $submission->data[$mapping['first_name']]['value'][0] : '';
-	$last = array_key_exists('last_name', $mapping) && $submission->data[$mapping['last_name']]['value'][0]? $submission->data[$mapping['last_name']]['value'][0] : '';
+	$first = array_key_exists('first_name', $mapping) && $submission->data[$mapping['first_name']][0]? $submission->data[$mapping['first_name']][0] : '';
+	$last = array_key_exists('last_name', $mapping) && $submission->data[$mapping['last_name']][0]? $submission->data[$mapping['last_name']][0] : '';
 	$newname = $first . " " . $last;
 
 	$universityid="";
-	if(array_key_exists('uid', $mapping) && $submission->data[$mapping['uid']]['value'][0]){
-		$universityid = $submission->data[$mapping['uid']]['value'][0];
-	}elseif(array_key_exists('universityid', $mapping) && $submission->data[$mapping['universityid']]['value'][0]){
-		$universityid = $submission->data[$mapping['universityid']]['value'][0];
+	if(array_key_exists('uid', $mapping) && $submission->data[$mapping['uid']][0]){
+		$universityid = $submission->data[$mapping['uid']][0];
+	}elseif(array_key_exists('universityid', $mapping) && $submission->data[$mapping['universityid']][0]){
+		$universityid = $submission->data[$mapping['universityid']][0];
 	}
 
 	//make sure email address is set before email notifications sent
 	if($netid && array_key_exists('netid_email', $mapping)){
-		$submission->data[$mapping['netid_email']]['value'][0] = $netid . "@nyu.edu";
+
+		$submission->data[$mapping['netid_email']][0] = $netid . "@nyu.edu";
 	}
 	if($newname && array_key_exists('email_subject', $mapping)){
-		$submission->data[$mapping['email_subject']]['value'][0] = $node->title . ": " .$newname;
+		$submission->data[$mapping['email_subject']][0] = $node->title . ": " .$newname;
 	}
 
 	$account = _netid_user_get_user_from_netid($netid);
 
+
 	if(!$account){
 		$account = _netid_user_create_user($netid);
+
 		if($newname && $account){			
 			
 			db_insert('field_data_field_display_name')
@@ -74,6 +79,7 @@ function netid_user_webform_submission_presave($node, &$submission) {
 	}
 	if(isset($account) && $account->uid > 0){
 		$submission->uid = $account->uid;
+
 	}
 	
 }
