@@ -1,5 +1,6 @@
 name = Net ID User
 core = 7.x
-description = "Create a user account from the submission of an NYU Net ID from a webform (data may be overwritten by LDAP if user logs in)"
+description = "Create a user account from the submission of an NYU Net ID from a webform (data may be overwritten by LDAP if user logs in). Requires "
 files[] = netid_user.module
 dependencies[] = webform
+version = "2"
