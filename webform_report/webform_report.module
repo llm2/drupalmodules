@@ -52,53 +52,62 @@ function webform_report_permission() {
 }
 
 /**
- * Implementation of hook_access
+ * Implementation of hook_node_access
  */
 function webform_report_node_access($node, $op, $account) {
 
   global $user;
   
-  switch ($op) {
-    case 'view':
-      // if node is published, return view access
-      if ($node->status) {
-        if (user_access('access webform reports')) {
+  // get the node type 
+  $node_type = is_string($node) ? $node : $node->type;  
+  
+  // if a webform_report content type is requested
+  if ($node_type == 'webform_report'){
+  
+    switch ($op) {
+      case 'view':
+        // if node is published, return view access
+        if ($node->status) {
+          if (user_access('access webform reports')) {
+            return NODE_ACCESS_ALLOW;
+          }
+          else {
+            return NODE_ACCESS_DENY;
+          }
+        }
+        // if unpublished, return update access - users who can update the node should be able to view it
+        else  {
+          if (node_access('update', $node)) {
+            return NODE_ACCESS_ALLOW;
+          }
+          else {
+            return NODE_ACCESS_DENY;
+          }
+        }
+        break;
+      case 'create':
+        if (user_access('create webform reports')) {
+            return NODE_ACCESS_ALLOW;
+          }
+          else {
+            return NODE_ACCESS_DENY;
+          }
+        break;
+      case 'update':
+      case 'delete':
+        if (user_access("edit webform reports") || (user_access("edit own webform reports") && ($user->uid == $node->uid))) {
           return NODE_ACCESS_ALLOW;
         }
         else {
           return NODE_ACCESS_DENY;
         }
-      }
-      // if unpublished, return update access - users who can update the node should be able to view it
-      else  {
-        if (node_access('update', $node)) {
-          return NODE_ACCESS_ALLOW;
-        }
-        else {
-          return NODE_ACCESS_DENY;
-        }
-      }
-      break;
-    case 'create':
-      if (user_access('create webform reports')) {
-          return NODE_ACCESS_ALLOW;
-        }
-        else {
-          return NODE_ACCESS_DENY;
-        }
-      break;
-    case 'update':
-    case 'delete':
-      if (user_access("edit webform reports") || (user_access("edit own webform reports") && ($user->uid == $node->uid))) {
-        return NODE_ACCESS_ALLOW;
-      }
-      else {
-        return NODE_ACCESS_DENY;
-      }
-      break;
-  }
-}
-
+        break;
+     }
+  } 
+  
+  return NODE_ACCESS_IGNORE;
+} 
+  
 /**
  * Implementation of hook_menu()
  */
@@ -294,7 +303,7 @@ function webform_report_update($node) {
   db_update('webform_report')
     ->fields(array(
       'description' => $node->description,
-      'wnid' => $node->wnid,
+    /*  'wnid' => $node->wnid,*/
       'columns' => serialize($node->columns),
       'sorton' => serialize($node->sorton),
       'filters' => serialize($node->filters),

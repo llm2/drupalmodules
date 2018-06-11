@@ -849,8 +849,10 @@ function _webform_report_format_data($raw, $column) {
       module_load_include('inc', 'webform', 'components/file');
       $file = webform_get_file($raw[0]);
       if (!empty($file->fid)) {
-        $text = webform_file_name($file->filepath);
-        $path = webform_file_url($file->filepath);
+      #  $text = webform_file_name($file->filepath);
+      #  $path = webform_file_url($file->filepath);
+	$text = webform_file_name(check_plain(webform_file_name($file->uri)));
+	$path = webform_file_url($file->uri);
         $link = '<a href="' . $path . '">' . 
                 $text . '</a>' . 
                 ' (' . (int) ($file->filesize/1024) . ' KB)';
@@ -992,6 +994,7 @@ function _webform_report_format_data($raw, $column) {
 						$account = user_load($user->uid);
 						if (user_access('view encrypted values', $account)) {
 							$out['data'] = decrypt($out['data'], array('base64' => TRUE));
+							$out['sort'] = decrypt($out['sort'], array('base64' => TRUE));
 						}else{
 							$out['data'] = "No access";	
 						}
