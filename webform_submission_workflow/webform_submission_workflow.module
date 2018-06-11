@@ -29,8 +29,8 @@ function webform_submission_workflow_webform_submission_actions($node, $submissi
 	$mapping = _component_mapping($node);
 	// Does this submission already have approved status?
 	/*$approved = FALSE;
-	 if (isset($submission->data[$mapping['status']]['value'][0])) {
-	 if ($submission->data[$mapping['status']]['value'][0] == 'approved') {
+	 if (isset($submission->data[$mapping['status']][0])) {
+	 if ($submission->data[$mapping['status']][0] == 'approved') {
 	 $approved = TRUE;
 	 }
 	 }*/
@@ -53,7 +53,7 @@ function webform_submission_workflow_status_submit($form, &$form_state) {
 	$submission = $form_state['build_info']['args'][1];
 
 	$mapping = _component_mapping($node);
-	$submission -> data[$mapping['status']]['value'][0] = $action;
+	$submission -> data[$mapping['status']][0] = $action;
 	
 	//aditional files to attach to email
 	$addfiles = array();
@@ -86,7 +86,7 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 	webform_set_breadcrumb($node, $submission);
 	$mapping = _component_mapping($node);
 	//if we want to use the name, we will need to check for encryption
-	//$recipient_name = $submission->data[$mapping[first_name]]['value'][0] . " " . $submission->data[$mapping[last_name]]['value'][0];
+	//$recipient_name = $submission->data[$mapping[first_name]][0] . " " . $submission->data[$mapping[last_name]][0];
 
 	$form['#tree'] = TRUE;
 	$form['#node'] = $node;
@@ -99,10 +99,10 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 	// $markup = "<td><p>";
 
 	foreach ($node->webform['components'] as $key => $component) {
-		if (isset($submission -> data[$key]['value'][0])) {
+		if (isset($submission -> data[$key][0])) {
 			if ($component['type'] == 'email' || ($component['type'] == 'select')) {
 
-				$value = $submission -> data[$key]['value'][0];
+				$value = $submission -> data[$key][0];
 				//$valid_email = ;
 				if (valid_email_address($value)) {
 					$options[$value] = $component['name'] . ': ' . $value;
@@ -135,7 +135,7 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 
 	$form['item0']['action'] = array('#type' => 'radios',
 	//'#title' => t('Action'),
-	'#options' => $actionoptions, '#default_value' => $submission -> data[$mapping['status']]['value'][0], );
+	'#options' => $actionoptions, '#default_value' => $submission -> data[$mapping['status']][0], );
 
 	$form['item0']['tr_end_1'] = array('#markup' => '</td></tr>');
 	$form['item0']['table_end'] = array('#markup' => '</tbody></table>');
@@ -187,7 +187,7 @@ function webform_submission_workflow_status($form, $form_state, $node, $submissi
 
 	$form['item3']['tr_start_1'] = array('#markup' => '<tr>');
 
-	$userfiles = _get_user_files($submission->data[$mapping['netid']]['value'][0]);
+	$userfiles = _get_user_files($submission->data[$mapping['netid']][0]);
 	if(sizeof($userfiles) > 0){
 		$form['item3']['file'] = array('#type' => 'checkboxes', '#options' => $userfiles, '#prefix' => '<td>', '#suffix' => '</td>', );
 	}else{
@@ -295,10 +295,10 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 		foreach ($node->webform['components'] as $component) {
 				$search = '%value[' . $component['form_key'] . ']';
 
-			if (isset($submission -> data[$component['cid']]['value'][0])) {
+			if (isset($submission -> data[$component['cid']][0])) {
 
 				if (webform_component_feature($component['type'], 'attachment') ) {
-					$file_object = webform_get_file($submission -> data[$component['cid']]['value'][0]);
+					$file_object = webform_get_file($submission -> data[$component['cid']][0]);
 					if ($file_object && ($file_object -> filepath = drupal_realpath($file_object -> uri))) {						
 						//attach to email
 						if ($attach) {
@@ -319,8 +319,8 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 						global $user;
 						$account = user_load($user->uid);
 						if (user_access('view encrypted values', $account)) {
-							if(isset($submission -> data[$component['cid']]['value'][0]) && !$submission -> data[$component['cid']]['value'][0] == ""){
-							 	$replace = decrypt($submission -> data[$component['cid']]['value'][0], array('base64' => TRUE));
+							if(isset($submission -> data[$component['cid']][0]) && !$submission -> data[$component['cid']][0] == ""){
+							 	$replace = decrypt($submission -> data[$component['cid']][0], array('base64' => TRUE));
 							}else{
 								$replace="";	
 							}
@@ -329,7 +329,7 @@ function webform_submission_workflow_pet_email($petname, $to, $ccarray, $node, $
 						}
 
 				} else {
-					$replace = $submission->data[$component['cid']]['value'][0];
+					$replace = $submission->data[$component['cid']][0];
 				}
 			}
 				//replace token in mail body (follows same convention as email replacement in webform, %value[key])
