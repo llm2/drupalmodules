@@ -143,9 +143,9 @@ function _class_advisers($component, $flat, $arguments) {
   return array(
     'yt21@nyu.edu' => t('Yevgeniya Traps (First-year)'),
     'cyd.cipolla@nyu.edu' => t('Cyd Cipolla (Sophomore)'),
-    'mag19@nyu.edu' => t('Matthew Gregory (Junior)'),
+    'imm270@nyu.edu' => t('Irene Morrison-Moncure (Junior)'),
     'meredith.theeman@nyu.edu' => t('Meredith Theeman (Senior)'),
-    'benjamin.brooks@nyu.edu' => t('Benjamin Brooks (Senior)'),
+    'mag19@nyu.edu' => t('Matthew Gregory (Senior)'),
     'jss518@nyu.edu' => t('Joshua Shirkey (Transfer)'),
     'lad421@nyu.edu' => t('Lisa Daily (Transfer)')
   );
@@ -169,7 +169,6 @@ function _academic_advisers($component, $flat, $arguments) {
 'jlb233@nyu.edu' => t('Jamie Bianco'),
 'vab3@nyu.edu' => t('Victoria Blythe'),
 'cb145@nyu.edu' => t('Christopher Bram'),
-'bfb4@nyu.edu' => t('Benjamin Brooks'),
 'wc24@nyu.edu' => t('William Caspary'),
 'jc46@nyu.edu' => t('John Castellano'),
 'puc1@nyu.edu' => t('Pauline Chakravartty'),
@@ -238,6 +237,7 @@ function _academic_advisers($component, $flat, $arguments) {
 'mm11@nyu.edu' => t('Bella Mirabella'),
 'am128@nyu.edu' => t('Ali Mirsepassi'),
 'mm6439@nyu.edu' => t('Meleko Mokgosi'),
+'imm270@nyu.edu' => t('Irene Morrison-Moncure'),
 'sem2@nyu.edu' => t('Sara Murphy'),
 'cn23@nyu.edu' => t('Chitra Neogy'),
 'vn10@nyu.edu' => t('Vasuki Nesiah'),
