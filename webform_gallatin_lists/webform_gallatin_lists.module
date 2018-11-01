@@ -380,6 +380,8 @@ function _ap_courses($component, $flat, $arguments) {
             'Latin: Vergil' => t('Latin: Vergil'),
             'Macroeconomics' => t('Macroeconomics'),
             'Microeconomics' => t('Microeconomics'),
+            'Physics 1' => t('Physics 1'),
+            'Physics 2' => t('Physics 2'),
             'Physics B' => t('Physics B'),
             'Physics C—Mech' => t('Physics C—Mech'),
             'Physics C—E&amp;M' => t('Physics C—E&amp;M'),
